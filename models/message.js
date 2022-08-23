@@ -5,6 +5,10 @@
 const { NotFoundError } = require("../expressError");
 const db = require("../db");
 
+const { accountSid, authToken, TWILIO_PHONE_NUMBER } = require("../config");
+
+const client = require('twilio')(accountSid, authToken);
+
 /** Message on the site. */
 
 class Message {
@@ -25,6 +29,17 @@ class Message {
         [from_username, to_username, body]);
 
     return result.rows[0];
+  }
+
+  static sendSMS(body, phone) {
+    client.messages
+      .create({
+        body: body,
+        from: TWILIO_PHONE_NUMBER,
+        to: phone,
+      })
+      .then(message => console.log(message.sid))
+      .catch(err => console.error(err));
   }
 
   /** Update read_at for message

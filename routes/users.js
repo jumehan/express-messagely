@@ -7,7 +7,7 @@ const User = require("../models/user");
 const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
 const { UnauthorizedError, BadRequestError } = require("../expressError");
 
-router.use(ensureLoggedIn);
+router.use(ensureLoggedIn); // explicittly add it
 
 /** GET / - get list of users.
  *
@@ -17,7 +17,7 @@ router.use(ensureLoggedIn);
 router.get("/", async function (req, res, next) {
   const users = await User.all();
 
-  return res.status(200).json({ users });
+  return res.json({ users });
 });
 
 /** GET /:username - get detail of users.
@@ -31,7 +31,7 @@ async function (req, res, next) {
   const username = req.params.username;
   const user = await User.get(username);
 
-  return res.status(200).json({ user });
+  return res.json({ user });
 });
 
 /** GET /:username/to - get messages to user
@@ -49,7 +49,7 @@ router.get("/:username/to",
     const username = req.params.username;
     const messages = await User.messagesTo(username);
 
-    return res.status(200).json({ messages });
+    return res.json({ messages });
   });
 
 
@@ -68,7 +68,7 @@ router.get("/:username/to",
    const username = req.params.username;
    const messages = await User.messagesFrom(username);
 
-   return res.status(200).json({ messages });
+   return res.json({ messages });
  });
 
 module.exports = router;

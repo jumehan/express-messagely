@@ -55,7 +55,8 @@ class User {
     const result = await db.query(
       `UPDATE users
           SET last_login_at = current_timestamp
-          WHERE username = $1`,
+          WHERE username = $1
+          RETURNING username`,
       [username]);
 
     const user = result.rows[0];

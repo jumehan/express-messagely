@@ -5,11 +5,9 @@ const router = new Router();
 
 const User = require("../models/user");
 const Message = require("../models/message");
-const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+
 const { UnauthorizedError, BadRequestError } = require("../expressError");
 const { response } = require("express");
-
-router.use(ensureLoggedIn, ensureCorrectUser);
 
 /** GET /:id - get detail of message.
  *
@@ -23,17 +21,17 @@ router.use(ensureLoggedIn, ensureCorrectUser);
  * Makes sure that the currently-logged-in users is either the to or from user.
  *
  **/
-router.get("/:id", async function(req, res, next) {
+router.get("/:id", async function (req, res, next) {
   const username = res.locals.user.username;
   const id = req.params.id;
   const message = await Message.get(id);
 
   if (username !== message.from_user.username
     && username !== message.to_user.username) {
-      throw new UnauthorizedError("access not allowed");
-    }
+    throw new UnauthorizedError("access not allowed");
+  }
 
-    return res.status(200).json({ message });
+  return res.json({ message });
 });
 
 
@@ -43,10 +41,24 @@ router.get("/:id", async function(req, res, next) {
  *   {message: {id, from_username, to_username, body, sent_at}}
  *
  **/
-router.post("/", async function(req, res, next) {
+router.post("/", async function (req, res, next) {
   const from_username = res.locals.user.username;
   const { to_username, body } = req.body;
-  const message = await Message.create({ from_username, to_username, body });
+  const message = await Message.create({
+    from_username,
+    to_username,
+    body,
+  });
+
+  const user = await User.get(to_username);
+  const phone = user.phone;
+
+  console.log('inside msg create')
+  try {
+    await Message.sendSMS(body, phone);
+  } catch (err) {
+    console.error("smsError", err);
+  }
 
   return res.status(201).json({ message });
 });
@@ -58,15 +70,18 @@ router.post("/", async function(req, res, next) {
  * Makes sure that the only the intended recipient can mark as read.
  *
  **/
-router.post("/:id/read", async function(req, res, next) {
+router.post("/:id/read", async function (req, res, next) {
   const username = res.locals.user.username;
   const id = req.params.id;
-  if (username !== message.to_user.username) {
-      throw new UnauthorizedError("access not allowed");
-    }
+  const result = await Message.get(id);
+
+  if (username !== result.to_user.username) {
+    throw new UnauthorizedError("access not allowed");
+  }
+
   const message = await Message.markRead(id);
 
-  return res.status(201).json({ message });
+  return res.json({ message });
 });
 
 
