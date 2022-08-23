@@ -4,30 +4,25 @@ const Router = require("express").Router;
 const router = new Router();
 
 const jwt = require("jsonwebtoken");
-const { JWT_OPTIONS, SECRET_KEY } = require("../config");
+const { SECRET_KEY } = require("../config");
 
-const {
-  authenticateJWT,
-  ensureLoggedIn,
-  ensureCorrectUser,
-} = require("../middleware/auth");
 const User = require("../models/user");
 
 const { UnauthorizedError, BadRequestError } = require("../expressError");
 
 /** POST /login: {username, password} => {token} */
 
-router.post("/login", function (req, res, next) {
-  const { username, password } = query.body;
-  const user = User.authenticate(username, password);
+router.post("/login", async function (req, res, next) {
+  const { username, password } = req.body;
+  const user = await User.authenticate(username, password);
   if (!user) {
     throw new UnauthorizedError("incorrect login or password");
   }
 
   const payload = { username };
-  _token = jwt.sign(payload, SECRET_KEY, JWT_OPTIONS);
+  let token = jwt.sign(payload, SECRET_KEY);
 
-  return res.status(201).json(_token);
+  return res.status(201).json({ token });
 });
 
 
@@ -36,18 +31,18 @@ router.post("/login", function (req, res, next) {
  * {username, password, first_name, last_name, phone} => {token}.
  */
 
-router.post("/register", function (req, res, next) {
-  const { username, password, first_name, last_name, phone } = query.body;
+router.post("/register", async function (req, res, next) {
+  const { username, password, first_name, last_name, phone } = req.body;
   try {
-    User.register({ username, password, first_name, last_name, phone });
+    await User.register({ username, password, first_name, last_name, phone });
   } catch (err) {
     throw new BadRequestError("invalid inputs");
   }
 
   const payload = { username };
-  _token = jwt.sign(payload, SECRET_KEY, JWT_OPTIONS);
+  let token = jwt.sign(payload, SECRET_KEY);
 
-  return res.status(201).json(_token);
+  return res.status(201).json({ token });
 });
 
 
